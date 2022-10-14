@@ -7,15 +7,21 @@
 const GLint WIDTH = 800, HEIGHT = 600;
 
 int main()
-{
+{   
+    //Initialize GLFW
     if (!glfwInit()) {
         std::cout << "initialize glfw failed\n";
         glfwTerminate();
         return 1;
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    //Setup GLFW window properties
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); //set opengl version???
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); //ver 3.3
+    //core profile = no backwards compatibility
+    //aka. not using deprecate, about-to-be-removed features
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    //allow forward compatibility
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     GLFWwindow* mainWindow = glfwCreateWindow(WIDTH, HEIGHT, "Hello mf", NULL, NULL);
     if (!mainWindow) {
@@ -23,13 +29,17 @@ int main()
         return 1;
     }
 
+    //get framebuffer size
     int bufferWidth, bufferHeight;
     glfwGetFramebufferSize(mainWindow, &bufferWidth, &bufferHeight);
 
+    //set context for glew to use
     glfwMakeContextCurrent(mainWindow);
 
+    //allow modern extension features
     glewExperimental = GL_TRUE;
 
+    //initialize GLEW
     if (glewInit() != GLEW_OK) {
         std::cout << "initialize GLEW failed\n";
         glfwDestroyWindow(mainWindow);
@@ -37,11 +47,11 @@ int main()
         return 1;
     }
 
+    //set viewport size
     glViewport(0, 0, bufferWidth, bufferHeight);
 
     while (!glfwWindowShouldClose(mainWindow)) {
         glfwPollEvents();
-
         glClearColor(0.3f, 0.2f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(mainWindow);
@@ -50,13 +60,3 @@ int main()
     return 0;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
