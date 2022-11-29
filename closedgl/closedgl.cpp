@@ -2,14 +2,20 @@
 //
 #include <string.h>
 #include <iostream>
+#include <cstdlib>
+
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
-#include <cstdlib>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
+
 
 // Glint, etc is consistent on any compiler != normal int
 const GLint WIDTH = 800, HEIGHT = 600;
 
-GLuint VAO, VBO, shader, uniformXMove;
+GLuint VAO, VBO, shader, uniformXMove, uniformModelTranslate;
 
 bool direction = true;
 float triOffset = 0.0f;
@@ -24,11 +30,13 @@ static const char* vShader = "                                                \n
                                                                               \n\
 layout (location = 0) in vec3 pos;											  \n\
 										  \n\
-uniform float xMove		;									  \n\
+//uniform float xMove;									  \n\
+uniform mat4 modelTranslate;									  \n\
                                                                               \n\
 void main()                                                                   \n\
 {                                                                             \n\
-    gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y+ xMove, pos.z, 1.0);				  \n\
+    //gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);				  \n\
+    gl_Position = modelTranslate * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);				  \n\
 }";
 
 // Fragment Shader
@@ -139,7 +147,8 @@ void CompileShaders()
         return;
     }
 
-	uniformXMove = glGetUniformLocation(shader, "xMove");
+	//uniformXMove = glGetUniformLocation(shader, "xMove");
+    uniformModelTranslate = glGetUniformLocation(shader, "modelTranslate");
 }
 
 
@@ -197,6 +206,8 @@ int main()
     CreateTriangle();
     CompileShaders();
 
+   // glm::mat4 model;
+
     while (!glfwWindowShouldClose(mainWindow)) {
         glfwPollEvents();
 
@@ -218,7 +229,11 @@ int main()
 
         glUseProgram(shader);
 
-        glUniform1f(uniformXMove, triOffset);
+        glm::mat4 model(1.0f);
+        model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+
+        //glUniform1f(uniformXMove, triOffset);
+        glUniformMatrix4fv(uniformModelTranslate, 1, GL_FALSE, glm::value_ptr(model));
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
