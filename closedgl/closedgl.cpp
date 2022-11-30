@@ -2,7 +2,7 @@
 //
 #include <string.h>
 #include <iostream>
-#include <cstdlib>
+#include <cmath>
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -14,6 +14,7 @@
 
 // Glint, etc is consistent on any compiler != normal int
 const GLint WIDTH = 800, HEIGHT = 600;
+const float TO_RADIAN = 3.14f / 180;
 
 GLuint VAO, VBO, shader, uniformXMove, uniformModelTranslate;
 
@@ -21,6 +22,8 @@ bool direction = true;
 float triOffset = 0.0f;
 float triMaxOffset = 0.7f;
 float triIncrement = 0.0005f;
+int triRotateOffset = 0;
+//int triRotateMax = 360;
 
 //normally shader codes are in separate files
 
@@ -224,6 +227,8 @@ int main()
             direction = !direction;
         }
 
+        triRotateOffset += 1;
+
         glClearColor(0.3f, 0.2f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -231,6 +236,7 @@ int main()
 
         glm::mat4 model(1.0f);
         model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+        model = glm::rotate(model, triRotateOffset* TO_RADIAN, glm::vec3(0.0f, 0.0f, triOffset));
 
         //glUniform1f(uniformXMove, triOffset);
         glUniformMatrix4fv(uniformModelTranslate, 1, GL_FALSE, glm::value_ptr(model));
