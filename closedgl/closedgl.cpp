@@ -34,7 +34,9 @@ static const char* vShader = "                                                \n
 #version 330                                                                  \n\
                                                                               \n\
 layout (location = 0) in vec3 pos;											  \n\
-										  \n\
+										                                        \n\
+out vec4 vertexColor;										                    \n\
+										                                        \n\
 //uniform float xMove;									  \n\
 uniform mat4 modelTranslate;									  \n\
                                                                               \n\
@@ -42,17 +44,27 @@ void main()                                                                   \n
 {                                                                             \n\
     //gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);				  \n\
     gl_Position = modelTranslate * vec4(pos.x, pos.y, pos.z, 1.0);				  \n\
+    vertexColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);                                                          \n\
 }";
+/* clamp(value, low, high)
+* if value < low -> return low
+* if value > high -> return high
+* The funny thing: it is ```std::clamp()```. But if i do ```std::clamp(pos,...)``` -> wrong result
+* Why??? when i didn't do ```using namespace std```
+*/
 
 // Fragment Shader
 static const char* fShader = "                                                \n\
-#version 330                                                                  \n\
+#version 330                                                                \n\
+                                                                  \n\
+in vec4 vertexColor;										                    \n\
                                                                               \n\
 out vec4 colour;                                                               \n\
                                                                               \n\
 void main()                                                                   \n\
 {                                                                             \n\
-    colour = vec4(1.0, 1.0, 0.0, 1.0);                                         \n\
+    //colour = vec4(1.0, 1.0, 0.0, 1.0);                                         \n\
+    colour = vertexColor;                                        \n\
 }";
 
 //the render's window coordinate is in the middle 
