@@ -16,7 +16,7 @@
 const GLint WIDTH = 800, HEIGHT = 600;
 const float TO_RADIAN = 3.14f / 180;
 
-GLuint VAO, VBO, shader, uniformXMove, uniformModelTranslate, IBO;
+GLuint VAO, VBO, shaderId, uniformXMove, uniformModelTranslateId, IBO, uniformProjectionId;
 
 bool direction = true;
 float triOffset = 0.0f;
@@ -42,11 +42,12 @@ out vec4 vertexColor;										                    \n\
 										                                        \n\
 //uniform float xMove;									  \n\
 uniform mat4 modelTranslate;									  \n\
+uniform mat4 projection;                                                       \n\
                                                                               \n\
 void main()                                                                   \n\
 {                                                                             \n\
     //gl_Position = vec4(0.4 * pos.x + xMove, 0.4 * pos.y, pos.z, 1.0);				  \n\
-    gl_Position = modelTranslate * vec4(pos.x, pos.y, pos.z, 1.0);				  \n\
+    gl_Position =  projection * modelTranslate * vec4(pos.x, pos.y, pos.z, 1.0);				  \n\
     vertexColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);                                                          \n\
 }";
 /* clamp(value, low, high)
@@ -95,7 +96,6 @@ void CreateTriangle() {
 
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     //GL_STATIC DRAW: the data aren't gonna change at all
     //GL_DYNAMIC_DRAW: drawing moving shapes, aka changing data
@@ -148,42 +148,43 @@ void AddShader(GLuint theProgram, const char* shaderCode, GLenum shaderType)
 
 void CompileShaders()
 {
-    shader = glCreateProgram();
+    shaderId = glCreateProgram();
 
-    if (!shader)
+    if (!shaderId)
     {
         printf("Failed to create shader\n");
         return;
     }
 
-    AddShader(shader, vShader, GL_VERTEX_SHADER);
-    AddShader(shader, fShader, GL_FRAGMENT_SHADER);
+    AddShader(shaderId, vShader, GL_VERTEX_SHADER);
+    AddShader(shaderId, fShader, GL_FRAGMENT_SHADER);
 
     //result of 2 above functions
     GLint result = 0;
     //store error logs
     GLchar eLog[1024] = { 0 };
 
-    glLinkProgram(shader);
-    glGetProgramiv(shader, GL_LINK_STATUS, &result);
+    glLinkProgram(shaderId);
+    glGetProgramiv(shaderId, GL_LINK_STATUS, &result);
     if (!result)
     {
-        glGetProgramInfoLog(shader, sizeof(eLog), NULL, eLog);
+        glGetProgramInfoLog(shaderId, sizeof(eLog), NULL, eLog);
         printf("Error linking program: '%s'\n", eLog);
         return;
     }
 
-    glValidateProgram(shader);
-    glGetProgramiv(shader, GL_VALIDATE_STATUS, &result);
+    glValidateProgram(shaderId);
+    glGetProgramiv(shaderId, GL_VALIDATE_STATUS, &result);
     if (!result)
     {
-        glGetProgramInfoLog(shader, sizeof(eLog), NULL, eLog);
+        glGetProgramInfoLog(shaderId, sizeof(eLog), NULL, eLog);
         printf("Error validating program: '%s'\n", eLog);
         return;
     }
 
 	//uniformXMove = glGetUniformLocation(shader, "xMove");
-    uniformModelTranslate = glGetUniformLocation(shader, "modelTranslate");
+    uniformModelTranslateId = glGetUniformLocation(shaderId, "modelTranslate");
+    uniformProjectionId = glGetUniformLocation(shaderId, "projection");
 }
 
 
@@ -244,7 +245,7 @@ int main()
     CreateTriangle();
     CompileShaders();
 
-
+    glm::mat4 projection = glm::perspective(45.0f, (GLfloat)bufferWidth / (GLfloat)bufferHeight, 2.8f, 100.0f);
 
     while (!glfwWindowShouldClose(mainWindow)) {
         glfwPollEvents();
@@ -265,23 +266,24 @@ int main()
         triRotateOffset += triRotateIncrement;
         triScaleOffset += triScaleIncrement;
 
-        if (triScaleOffset > triScaleMax || triScaleOffset < 0) {
+       if (triScaleOffset > triScaleMax || triScaleOffset < 0) {
             triScaleIncrement *= -1;
-        }
+       }
 
         glClearColor(0.3f, 0.2f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(shader);
+        glUseProgram(shaderId);
 
         glm::mat4 model(1.0f);
-        model = glm::translate(model, glm::vec3(triOffset, 0.0f, 0.0f));
+        model = glm::translate(model, glm::vec3(triOffset, triOffset, -3.5f));
         //glm::vec3 is for indicating which axis the model is rotating around, value doesn't matter.
         model = glm::rotate(model, triRotateOffset* TO_RADIAN, glm::vec3(1.0f, 1.0f, 1.0f));
-        model = glm::scale(model, glm::vec3(triScaleOffset, triScaleOffset, 1.0f));
+        model = glm::scale(model, glm::vec3(triScaleOffset, triScaleOffset, triScaleOffset));
 
         //glUniform1f(uniformXMove, triOffset);
-        glUniformMatrix4fv(uniformModelTranslate, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(uniformModelTranslateId, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(uniformProjectionId, 1, GL_FALSE, glm::value_ptr(projection));
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
@@ -295,6 +297,8 @@ int main()
 
         glfwSwapBuffers(mainWindow);
     }
+
+    
 
     return 0;
 }
